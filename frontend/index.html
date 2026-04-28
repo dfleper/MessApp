@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MessApp</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen bg-slate-950 py-6 flex flex-col justify-center sm:py-12">
+
+  <main class="relative py-3 sm:max-w-xl sm:mx-auto">
+
+    <div class="orbitron-text">
+
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-indigo-700 to-purple-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl">
+      </div>
+
+      <div class="text-white relative px-4 py-10 bg-indigo-400 shadow-lg sm:rounded-3xl sm:p-20">
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pb-6 text-center sm:text-left">
+          <div class="avatar">
+            <div class="w-24 sm:w-32 rounded">
+              <img src="./images/img.webp" />
+            </div>
+          </div>
+
+          <div>
+            <h1 class="text-2xl sm:text-3xl">Contáctame</h1>
+
+            <p class="text-sm sm:text-base text-gray-300">
+              No olvides tus datos...
+            </p>
+          </div>
+        </div>
+
+        <form id="form" novalidate>
+
+          <input id="nameInput"
+            class="shadow mb-4 appearance-none border rounded w-full py-2 px-3 text-indigo-900 leading-tight focus:outline-none focus:shadow-outline"
+            type="text" placeholder="Nombre" name="name">
+
+          <input id="emailInput"
+            class="shadow mb-4 appearance-none border rounded w-full py-2 px-3 text-indigo-900 leading-tight focus:outline-none focus:shadow-outline"
+            type="text" placeholder="Email" name="email">
+
+          <input id="subjectInput"
+            class="shadow mb-4 appearance-none border rounded w-full py-2 px-3 text-indigo-900 leading-tight focus:outline-none focus:shadow-outline"
+            type="text" placeholder="Asunto" name="_subject">
+
+          <textarea id="messageInput"
+            class="shadow mb-4 min-h-0 appearance-none border rounded h-64 w-full py-2 px-3 text-indigo-900 leading-tight focus:outline-none focus:shadow-outline"
+            type="text" placeholder="Escribe tu mensaje aquí..." name="message" style="height: 121px;"></textarea>
+
+          <div class="flex justify-between">
+            <input id="sendButton"
+              class="shadow bg-indigo-600 hover:bg-indigo-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              type="submit" value="Enviar ➤">
+
+            <input id="sendReset"
+              class="shadow bg-indigo-600 hover:bg-indigo-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              type="reset">
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+    </div>
+
+  </main>
+
+  <div id="toastContainer"
+    class="fixed left-1/2 top-1/2 z-50 flex w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 px-4 pointer-events-none">
+  </div>
+  <script type="module" src="/src/main.js"></script>
+
+</body>
+
+</html>

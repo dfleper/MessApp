@@ -1,0 +1,17 @@
+# Build artifacts
+bin/
+obj/
+
+# IDE/editor
+.vscode/*
+!.vscode/settings.json
+.vs/
+*.user
+*.suo
+
+# Logs
+*.log
+
+# Local environment overrides
+.env
+.env.*

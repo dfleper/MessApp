@@ -1,0 +1,31 @@
+# Dependencias
+node_modules/
+
+# Build de producción
+dist/
+
+# Caché de Vite
+.vite/
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/settings.json
+
+# Archivos temporales
+*.tmp
+*.temp

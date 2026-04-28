@@ -1,0 +1,23 @@
+# Build artifacts
+bin/
+obj/
+
+# IDE/editor
+.vscode/
+.vs/
+*.user
+*.suo
+*.sln.DotSettings
+
+# VCS and metadata
+.git/
+.gitignore
+
+# Local environment/logs
+*.log
+.env
+.env.*
+
+# Docker/compose files not needed in build context
+docker-compose*.yml
+README.md
