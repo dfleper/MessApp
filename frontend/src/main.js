@@ -19,10 +19,21 @@ const nameInput = document.getElementById('nameInput');
 const emailInput = document.getElementById('emailInput');
 const subjectInput = document.getElementById('subjectInput');
 const messageInput = document.getElementById('messageInput');
+const sendButton = document.getElementById('sendButton');
+
+const setSendButtonDisabled = (isDisabled) => {
+  if (!sendButton) {
+    return;
+  }
+  sendButton.disabled = isDisabled;
+};
 
 if (form && nameInput && emailInput && subjectInput && messageInput) {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (activeToasts.size > 0) {
+      return;
+    }
 
     const nombre = nameInput.value.trim();
     const email = emailInput.value.trim();
@@ -246,6 +257,9 @@ const showToast = (message, type = 'info') => {
   const removeToast = () => {
     activeToasts.delete(toastKey);
     toast.remove();
+    if (activeToasts.size === 0) {
+      setSendButtonDisabled(false);
+    }
   };
 
   const closeButton = toast.querySelector('button');
@@ -257,6 +271,7 @@ const showToast = (message, type = 'info') => {
   closeButton.addEventListener('click', removeToast);
 
   toastContainer.appendChild(toast);
+  setSendButtonDisabled(true);
 
   setTimeout(removeToast, 3500);
 };
