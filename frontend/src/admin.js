@@ -1,3 +1,5 @@
+import './style.css';
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
 const DEFAULT_LIMIT = 100;
 
@@ -88,16 +90,18 @@ const renderMessages = (mensajes) => {
     const isRead = Boolean(mensaje.readAt);
 
     row.innerHTML = `
-      <td>${mensaje.id}</td>
-      <td>${mensaje.nombre}</td>
-      <td>${mensaje.email}</td>
-      <td>${mensaje.asunto}</td>
-      <td>${mensaje.mensaje}</td>
-      <td>${formatDate(mensaje.createdAt)}</td>
-      <td>${isRead ? 'Sí' : 'No'}</td>
-      <td>
-        <button type="button" data-action="read" data-id="${mensaje.id}" ${isRead ? 'disabled' : ''}>Marcar leído</button>
-        <button type="button" data-action="delete" data-id="${mensaje.id}">Soft delete</button>
+      <td class="p-2 align-top">${mensaje.id}</td>
+      <td class="p-2 align-top">${mensaje.nombre}</td>
+      <td class="p-2 align-top">${mensaje.email}</td>
+      <td class="p-2 align-top">${mensaje.asunto}</td>
+      <td class="p-2 align-top">${mensaje.mensaje}</td>
+      <td class="p-2 align-top">${formatDate(mensaje.createdAt)}</td>
+      <td class="p-2 align-top">${isRead ? 'Sí' : 'No'}</td>
+      <td class="p-2 align-top">
+        <div class="flex flex-col gap-2">
+          <button type="button" data-action="read" data-id="${mensaje.id}" ${isRead ? 'disabled' : ''} class="shadow bg-indigo-600 enabled:hover:bg-indigo-900 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed">Marcar leído</button>
+          <button type="button" data-action="delete" data-id="${mensaje.id}" class="shadow bg-fuchsia-700 hover:bg-fuchsia-900 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">Soft delete</button>
+        </div>
       </td>
     `;
 

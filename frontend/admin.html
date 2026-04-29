@@ -5,37 +5,67 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MessApp Admin</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
 </head>
 
-<body>
-  <main>
-    <h1>Panel Admin - Mensajes</h1>
+<body class="min-h-screen bg-slate-950 py-6 flex flex-col justify-center sm:py-12">
+  <main class="relative py-3 sm:max-w-6xl sm:mx-auto w-full px-4">
+    <div class="orbitron-text">
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-indigo-700 to-purple-500 shadow-lg transform -skew-y-2 sm:skew-y-0 sm:-rotate-1 sm:rounded-3xl">
+      </div>
 
-    <form id="adminForm" autocomplete="off">
-      <label for="apiKeyInput">API Key</label>
-      <input id="apiKeyInput" type="password" placeholder="X-Admin-Key" />
-      <button id="loadButton" type="submit">Cargar mensajes</button>
-      <button id="purgeButton" type="button">Borrar BBDD completa</button>
-    </form>
+      <div class="text-white relative px-4 py-8 bg-indigo-400 shadow-lg sm:rounded-3xl sm:p-8">
+        <div class="pb-6">
+          <h1 class="text-2xl sm:text-3xl text-center sm:text-left">Panel Admin - Mensajes</h1>
+        </div>
 
-    <p id="status"></p>
+        <form id="adminForm" autocomplete="off"
+          class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 items-center">
+          <input id="apiKeyInput"
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-indigo-900 leading-tight focus:outline-none focus:shadow-outline"
+            type="password" placeholder="X-Admin-Key" />
+          <button id="loadButton" type="submit"
+            class="shadow bg-indigo-600 hover:bg-indigo-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cargar
+            mensajes</button>
+          <button id="purgeButton" type="button"
+            class="shadow bg-fuchsia-700 hover:bg-fuchsia-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Borrar
+            BBDD completa</button>
+        </form>
 
-    <table border="1" cellpadding="6" cellspacing="0" width="100%">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Asunto</th>
-          <th>Mensaje</th>
-          <th>Creado</th>
-          <th>Leído</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="messagesBody"></tbody>
-    </table>
+        <p id="status" class="mt-4 text-sm text-gray-200"></p>
+
+        <div class="mt-4 overflow-x-auto rounded border border-indigo-200/30 bg-indigo-500/30">
+          <table class="w-full text-sm">
+            <thead class="bg-indigo-700/70">
+              <tr>
+                <th class="p-2 text-left">ID</th>
+                <th class="p-2 text-left">Nombre</th>
+                <th class="p-2 text-left">Email</th>
+                <th class="p-2 text-left">Asunto</th>
+                <th class="p-2 text-left">Mensaje</th>
+                <th class="p-2 text-left">Creado</th>
+                <th class="p-2 text-left">Leído</th>
+                <th class="p-2 text-left">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="messagesBody" class="[&_tr:nth-child(even)]:bg-indigo-900/20"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
+
+  <footer class="orbitron-text mt-6 text-white px-4 py-6">
+    <aside>
+      <p class="text-center text-sm sm:text-base break-words">
+        Copyright © 2026 - dfleper with ❤️
+      </p>
+    </aside>
+  </footer>
 
   <script type="module" src="/src/admin.js"></script>
 </body>
