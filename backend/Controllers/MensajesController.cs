@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using MessApp.Api.Models;
 using MessApp.Api.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MessApp.Api.Controllers;
@@ -14,14 +15,21 @@ public sealed class MensajesController : ControllerBase
     private static readonly Regex NombreRegex = new(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", RegexOptions.Compiled);
     private const int DefaultAdminLimit = 20;
     private const int MaxAdminLimit = 100;
+    private const string SenderCookieName = "mess_sender_id";
     private readonly MensajesRepository _repository;
     private readonly string _adminApiKey;
+    private readonly IMemoryCache _memoryCache;
+    private readonly int _secondsBetweenMessages;
 
-    public MensajesController(MensajesRepository repository, IConfiguration configuration)
+    public MensajesController(MensajesRepository repository, IConfiguration configuration, IMemoryCache memoryCache)
     {
         _repository = repository;
+        _memoryCache = memoryCache;
         _adminApiKey = configuration.GetSection(AdminAccessOptions.SectionName)
             .Get<AdminAccessOptions>()?.ApiKey?.Trim() ?? string.Empty;
+        var configuredSeconds = configuration.GetSection(RateLimitOptions.SectionName)
+            .Get<RateLimitOptions>()?.SecondsBetweenMessages ?? 300;
+        _secondsBetweenMessages = Math.Max(1, configuredSeconds);
     }
 
     [HttpPost]
@@ -40,9 +48,51 @@ public sealed class MensajesController : ControllerBase
             }));
         }
 
+        var senderId = GetOrCreateSenderIdCookie();
+        var senderKey = BuildSenderKey(HttpContext.Connection.RemoteIpAddress?.ToString(), senderId);
+        if (_memoryCache.TryGetValue<DateTimeOffset>(senderKey, out var nextAllowedAt) && nextAllowedAt > DateTimeOffset.UtcNow)
+        {
+            var remainingSeconds = Math.Max(1, (int)Math.Ceiling((nextAllowedAt - DateTimeOffset.UtcNow).TotalSeconds));
+            Response.Headers.RetryAfter = remainingSeconds.ToString();
+            return StatusCode(StatusCodes.Status429TooManyRequests, new
+            {
+                error = "Debes esperar antes de enviar otro mensaje",
+                retryAfterSeconds = remainingSeconds
+            });
+        }
+
         var id = await _repository.CreateAsync(request, HttpContext.Connection.RemoteIpAddress, cancellationToken);
+        _memoryCache.Set(senderKey, DateTimeOffset.UtcNow.AddSeconds(_secondsBetweenMessages), TimeSpan.FromSeconds(_secondsBetweenMessages));
 
         return Created($"/api/mensajes/{id}", new { id });
+    }
+
+    private string? GetOrCreateSenderIdCookie()
+    {
+        if (Request.Cookies.TryGetValue(SenderCookieName, out var senderId) && !string.IsNullOrWhiteSpace(senderId))
+        {
+            return senderId;
+        }
+
+        senderId = Guid.NewGuid().ToString("N");
+        Response.Cookies.Append(SenderCookieName, senderId, new CookieOptions
+        {
+            HttpOnly = true,
+            IsEssential = true,
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            MaxAge = TimeSpan.FromDays(30)
+        });
+
+        return null;
+    }
+
+    private static string BuildSenderKey(string? ip, string? senderId)
+    {
+        var normalizedIp = string.IsNullOrWhiteSpace(ip) ? "0.0.0.0" : ip;
+        return string.IsNullOrWhiteSpace(senderId)
+            ? $"msg-rate:{normalizedIp}"
+            : $"msg-rate:{normalizedIp}:{senderId}";
     }
 
     [HttpGet("/health")]

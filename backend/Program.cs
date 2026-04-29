@@ -7,6 +7,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<MessApp.Api.Services.MensajesRepository>();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddCors(options =>
 {
