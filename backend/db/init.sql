@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS mensajes (
   texto TEXT NOT NULL,
   ip_usuario INET NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  read_at TIMESTAMPTZ NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ NULL
 );

@@ -46,7 +46,7 @@ public sealed class MensajesRepository
         await connection.OpenAsync(cancellationToken);
 
         const string sql = @"
-            SELECT id, nombre, email, asunto, texto, ip_usuario::text, created_at
+            SELECT id, nombre, email, asunto, texto, ip_usuario::text, created_at, read_at
             FROM mensajes
             WHERE deleted_at IS NULL
             ORDER BY created_at DESC
@@ -67,10 +67,57 @@ public sealed class MensajesRepository
                 reader.GetString(3),
                 reader.GetString(4),
                 reader.GetString(5),
-                reader.GetDateTime(6)));
+                reader.GetDateTime(6),
+                reader.IsDBNull(7) ? null : reader.GetDateTime(7)));
         }
 
         return result;
+    }
+
+    public async Task<bool> MarkAsReadAsync(long id, CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = @"
+            UPDATE mensajes
+            SET read_at = COALESCE(read_at, NOW()),
+                updated_at = NOW()
+            WHERE id = @id AND deleted_at IS NULL;";
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("id", id);
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        return affected > 0;
+    }
+
+    public async Task<bool> SoftDeleteAsync(long id, CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = @"
+            UPDATE mensajes
+            SET deleted_at = NOW(),
+                updated_at = NOW()
+            WHERE id = @id AND deleted_at IS NULL;";
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("id", id);
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        return affected > 0;
+    }
+
+    public async Task<int> PurgeAllAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = "DELETE FROM mensajes;";
+        await using var command = new NpgsqlCommand(sql, connection);
+        return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 }
 
@@ -81,4 +128,5 @@ public sealed record MensajeAdminItem(
     string Asunto,
     string Mensaje,
     string IpUsuario,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    DateTime? ReadAt);

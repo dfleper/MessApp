@@ -52,21 +52,70 @@ public sealed class MensajesController : ControllerBase
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> GetForAdmin([FromQuery] int? limit, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_adminApiKey))
+        if (!IsAdminAuthorized(out var unauthorizedResult))
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Admin access not configured" });
-        }
-
-        var providedKey = Request.Headers["X-Admin-Key"].ToString();
-        if (!IsValidAdminKey(providedKey, _adminApiKey))
-        {
-            return Unauthorized(new { error = "Invalid admin credentials" });
+            return unauthorizedResult;
         }
 
         var safeLimit = Math.Clamp(limit ?? DefaultAdminLimit, 1, MaxAdminLimit);
         var mensajes = await _repository.GetLatestAsync(safeLimit, cancellationToken);
 
         return Ok(mensajes);
+    }
+
+    [HttpPatch("admin/{id:long}/read")]
+    public async Task<IActionResult> MarkAsRead([FromRoute] long id, CancellationToken cancellationToken)
+    {
+        if (!IsAdminAuthorized(out var unauthorizedResult))
+        {
+            return unauthorizedResult;
+        }
+
+        var updated = await _repository.MarkAsReadAsync(id, cancellationToken);
+        return updated ? NoContent() : NotFound(new { error = "Mensaje no encontrado" });
+    }
+
+    [HttpDelete("admin/{id:long}")]
+    public async Task<IActionResult> SoftDelete([FromRoute] long id, CancellationToken cancellationToken)
+    {
+        if (!IsAdminAuthorized(out var unauthorizedResult))
+        {
+            return unauthorizedResult;
+        }
+
+        var deleted = await _repository.SoftDeleteAsync(id, cancellationToken);
+        return deleted ? NoContent() : NotFound(new { error = "Mensaje no encontrado" });
+    }
+
+    [HttpDelete("admin/purge")]
+    public async Task<IActionResult> PurgeAll(CancellationToken cancellationToken)
+    {
+        if (!IsAdminAuthorized(out var unauthorizedResult))
+        {
+            return unauthorizedResult;
+        }
+
+        var removedRows = await _repository.PurgeAllAsync(cancellationToken);
+        return Ok(new { deleted = removedRows });
+    }
+
+    private bool IsAdminAuthorized(out IActionResult? unauthorizedResult)
+    {
+        if (string.IsNullOrWhiteSpace(_adminApiKey))
+        {
+            unauthorizedResult = StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Admin access not configured" });
+            return false;
+        }
+
+        var providedKey = Request.Headers["X-Admin-Key"].ToString();
+        if (!IsValidAdminKey(providedKey, _adminApiKey))
+        {
+            unauthorizedResult = Unauthorized(new { error = "Invalid admin credentials" });
+            return false;
+        }
+
+        unauthorizedResult = null;
+        return true;
     }
 
     private static bool IsValidAdminKey(string providedKey, string configuredKey)
