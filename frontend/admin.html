@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MessApp Admin</title>
+</head>
+
+<body>
+  <main>
+    <h1>Panel Admin - Mensajes</h1>
+
+    <form id="adminForm" autocomplete="off">
+      <label for="apiKeyInput">API Key</label>
+      <input id="apiKeyInput" type="password" placeholder="X-Admin-Key" />
+      <button id="loadButton" type="submit">Cargar mensajes</button>
+      <button id="purgeButton" type="button">Borrar BBDD completa</button>
+    </form>
+
+    <p id="status"></p>
+
+    <table border="1" cellpadding="6" cellspacing="0" width="100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Asunto</th>
+          <th>Mensaje</th>
+          <th>Creado</th>
+          <th>Leído</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="messagesBody"></tbody>
+    </table>
+  </main>
+
+  <script type="module" src="/src/admin.js"></script>
+</body>
+
+</html>
