@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
+using System.Text;
 using MessApp.Api.Models;
 using MessApp.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +49,7 @@ public sealed class MensajesController : ControllerBase
     public IActionResult Health() => Ok(new { status = "ok" });
 
     [HttpGet("admin")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> GetForAdmin([FromQuery] int? limit, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_adminApiKey))
@@ -55,7 +58,7 @@ public sealed class MensajesController : ControllerBase
         }
 
         var providedKey = Request.Headers["X-Admin-Key"].ToString();
-        if (!string.Equals(providedKey, _adminApiKey, StringComparison.Ordinal))
+        if (!IsValidAdminKey(providedKey, _adminApiKey))
         {
             return Unauthorized(new { error = "Invalid admin credentials" });
         }
@@ -64,5 +67,19 @@ public sealed class MensajesController : ControllerBase
         var mensajes = await _repository.GetLatestAsync(safeLimit, cancellationToken);
 
         return Ok(mensajes);
+    }
+
+    private static bool IsValidAdminKey(string providedKey, string configuredKey)
+    {
+        if (string.IsNullOrEmpty(providedKey) || string.IsNullOrEmpty(configuredKey))
+        {
+            return false;
+        }
+
+        var providedBytes = Encoding.UTF8.GetBytes(providedKey);
+        var configuredBytes = Encoding.UTF8.GetBytes(configuredKey);
+
+        return providedBytes.Length == configuredBytes.Length
+            && CryptographicOperations.FixedTimeEquals(providedBytes, configuredBytes);
     }
 }
