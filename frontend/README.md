@@ -1,72 +1,108 @@
 # Frontend (Vite)
 
-Guía de arranque del frontend con la configuración actual del repositorio.
+Guía actualizada para ejecutar y usar el frontend de **MessApp** con la configuración real del repositorio.
 
-## Estado de configuración revisado
+## Stack y versiones (sin cambios)
 
-- `.gitignore`: ignora `node_modules`, `dist`, cachés y archivos locales de entorno.
-- `.dockerignore`: excluye `node_modules`, `dist`, `.git` y logs del contexto de build.
-- `Dockerfile`: usa `node:lts-alpine3.23`, instala dependencias con `npm install` y arranca con Vite.
-- `docker-compose.yml`: publica el frontend en `5173` y define `VITE_API_URL=http://localhost:5000`.
+- Vite `8.0.10`
+- Tailwind CSS `4.2.4`
+- Plugin `@tailwindcss/vite` `4.2.4`
+- Node base image: `node:lts-alpine3.23`
 
-## Requisitos
+## Estructura funcional
 
-- Docker
-- Docker Compose
+- `index.html` + `src/main.js`: formulario público para crear mensajes.
+- `admin.html` + `src/admin.js`: panel admin para listar, marcar leído, soft delete y purge.
+- `src/style.css`: estilos del frontend.
 
-> No necesitas instalar Node.js localmente si ejecutas el frontend dentro de Docker.
+## Variables de entorno
 
-## Arranque rápido
+- `VITE_API_URL` (default en código: `http://localhost:5000`)
 
-Desde la carpeta `frontend/`:
+En Docker Compose ya viene definida como:
+
+```yaml
+VITE_API_URL=http://localhost:5000
+```
+
+## Desarrollo con Docker (recomendado)
+
+Desde `frontend/`:
 
 ```bash
 docker compose up --build
 ```
 
-Aplicación disponible en:
+Disponible en:
 
 - `http://localhost:5173`
+- Admin UI: `http://localhost:5173/admin.html`
 
-## Comandos útiles
+### Cómo está montado el código
 
-Levantar en segundo plano:
+El servicio **sí monta el código local**:
+
+- `.:/app` para hot reload en desarrollo.
+- `frontend_node_modules:/app/node_modules` para persistir dependencias del contenedor.
+
+## Desarrollo local (sin Docker)
+
+Requisitos:
+
+- Node.js con npm
+
+Comandos:
+
+```bash
+npm install
+npm run dev -- --host 0.0.0.0
+```
+
+## Scripts disponibles
+
+```bash
+npm run dev
+npm run build
+npm run preview -- --host 0.0.0.0
+```
+
+## Flujo del formulario público
+
+`src/main.js` valida antes de enviar:
+
+- Nombre: 2-60, solo letras y espacios.
+- Email: 5-100, formato email.
+- Asunto: 2-80.
+- Mensaje: 10-250.
+
+Luego hace `POST` a:
+
+- `POST {VITE_API_URL}/api/mensajes`
+
+## Flujo del panel admin
+
+`src/admin.js` exige API key y la manda en header:
+
+- `X-Admin-Key: <api-key>`
+
+Acciones:
+
+- Cargar mensajes: `GET /api/mensajes/admin?limit=100`
+- Marcar leído: `PATCH /api/mensajes/admin/{id}/read`
+- Soft delete: `DELETE /api/mensajes/admin/{id}`
+- Purge total: `DELETE /api/mensajes/admin/purge`
+
+## Comandos útiles Docker
 
 ```bash
 docker compose up --build -d
-```
-
-Ver logs del frontend:
-
-```bash
 docker compose logs -f frontend
-```
-
-Parar servicios:
-
-```bash
 docker compose down
-```
-
-Parar y borrar volumen de dependencias:
-
-```bash
 docker compose down -v
 ```
 
-
-## ¿El código está dentro del contenedor?
-
-Sí. El código del frontend se copia dentro de la imagen con `COPY . .` en el `Dockerfile` y se ejecuta desde `/app` dentro del contenedor.
-
-El servicio ya no monta `.:/app`, por lo que depende del código empaquetado en la imagen.
-
 ## Integración con backend
 
-Este frontend está configurado para consumir API en:
+Este frontend espera backend en `http://localhost:5000` (salud en `/health`).
 
-```text
-VITE_API_URL=http://localhost:5000
-```
-
-Si cambias el host/puerto del backend, actualiza esa variable en `frontend/docker-compose.yml`.
+Si cambias host/puerto del backend, actualiza `VITE_API_URL` en `frontend/docker-compose.yml`.

@@ -1,75 +1,114 @@
 # Backend (MessApp.Api)
 
-Guía de arranque del backend con el entorno actual del repositorio, sin cambiar versiones ni stack.
+Guía actualizada para ejecutar el backend con la configuración vigente del repositorio.
 
-## Estado de configuración revisado
+## Stack y versiones (sin cambios)
 
-- `.gitignore`: ignora artefactos de build (`bin/`, `obj/`), logs y `.env` locales.
-- `.dockerignore`: evita enviar `bin/`, `obj/`, `.git`, logs, `.env` y metadatos al contexto de build.
-- `Dockerfile`: usa `mcr.microsoft.com/dotnet/sdk:8.0`, expone `5000` y ejecuta `dotnet watch`.
-- `docker-compose.yml`: levanta API + PostgreSQL (imagen `postgres:16-alpine`) y define conexión por variable de entorno.
+- .NET SDK image: `mcr.microsoft.com/dotnet/sdk:8.0`
+- ASP.NET Core Web API
+- PostgreSQL image: `postgres:16-alpine`
+- Provider DB: `Npgsql`
 
-## Requisitos
+## Estructura funcional
 
-- Docker
-- Docker Compose
+- `Program.cs`: configuración de servicios, CORS, swagger y pipeline.
+- `Controllers/MensajesController.cs`: endpoints públicos + endpoints admin protegidos.
+- `Services/MensajesRepository.cs`: acceso a PostgreSQL con SQL parametrizado.
+- `db/init.sql`: inicialización de la tabla `mensajes`.
 
-> No necesitas instalar .NET ni PostgreSQL en tu máquina para correr este backend en modo desarrollo con Docker.
+## Configuración clave
 
-## Arranque rápido
+Variables usadas en `docker-compose.yml`:
 
-Desde la carpeta `backend/`:
+- `ASPNETCORE_ENVIRONMENT=Development`
+- `ASPNETCORE_URLS=http://0.0.0.0:5000`
+- `ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=mensajes;Username=postgres;Password=postgres`
+- `AdminAccess__ApiKey=apikey`
+
+## Desarrollo con Docker (recomendado)
+
+Desde `backend/`:
 
 ```bash
 docker compose up --build
 ```
 
-Servicios esperados:
+Servicios:
 
 - API: `http://localhost:5000`
-- Healthcheck API: `http://localhost:5000/health`
-- PostgreSQL: `localhost:5432` (usuario `postgres`, password `postgres`, DB `mensajes`)
+- Health: `http://localhost:5000/health`
+- PostgreSQL: `localhost:5432` (`postgres/postgres`, DB `mensajes`)
 
-## Comandos útiles
+### Cómo está montado el código
 
-Levantar en segundo plano:
+El servicio **sí monta el código local**:
+
+- `.:/app` para desarrollo en vivo.
+- `nuget_cache:/root/.nuget/packages` para cachear paquetes.
+
+La base de datos usa:
+
+- `postgres_data:/var/lib/postgresql/data`
+- `./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro`
+
+## Endpoints
+
+### Público
+
+- `POST /api/mensajes`
+- `GET /health`
+
+`POST /api/mensajes` recibe:
+
+```json
+{
+  "nombre": "string",
+  "email": "string",
+  "asunto": "string",
+  "mensaje": "string"
+}
+```
+
+Validaciones:
+
+- `nombre`: 2-60 y regex de letras/espacios.
+- `email`: 5-100 y formato email.
+- `asunto`: 2-80.
+- `mensaje`: 10-250.
+
+### Admin (requiere `X-Admin-Key`)
+
+- `GET /api/mensajes/admin?limit={n}` (limit clamp 1..100, default 20)
+- `PATCH /api/mensajes/admin/{id}/read`
+- `DELETE /api/mensajes/admin/{id}` (soft delete)
+- `DELETE /api/mensajes/admin/purge` (hard delete total)
+
+Si la clave no es válida: `401`.
+Si no hay clave configurada: `503`.
+
+## Seguridad y comportamiento
+
+- Comparación de API key en tiempo constante (`FixedTimeEquals`).
+- Consultas SQL parametrizadas en todas las operaciones.
+- CORS restringido a `http://localhost:5173`.
+- Endpoints admin con `ResponseCache` deshabilitado (`NoStore`).
+
+## Comandos útiles Docker
 
 ```bash
 docker compose up --build -d
-```
-
-Ver logs del backend:
-
-```bash
 docker compose logs -f backend
-```
-
-Ver logs de base de datos:
-
-```bash
 docker compose logs -f db
-```
-
-Parar servicios:
-
-```bash
 docker compose down
-```
-
-Parar y borrar volúmenes:
-
-```bash
 docker compose down -v
 ```
 
+## Prueba rápida manual
 
-## ¿El código está dentro del contenedor?
+Con backend y db arriba:
 
-Sí. El código del backend se copia dentro de la imagen mediante `COPY . .` en el `Dockerfile` y se ejecuta desde `/app` dentro del contenedor.
+```bash
+curl -i http://localhost:5000/health
+```
 
-El servicio ya no monta `.:/app`, así que el contenedor no depende del código del host para arrancar.
-
-## Notas de desarrollo
-
-- El backend se ejecuta con el código empaquetado en la imagen del contenedor.
-- Si modificas código, reconstruye imagen con `docker compose up --build` para aplicar cambios.
+Esperado: `200` y `{"status":"ok"}`.

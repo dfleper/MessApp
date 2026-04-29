@@ -45,8 +45,16 @@ public sealed class MensajesRepository
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        const string sql = @"
+        var hasReadAtColumn = await HasReadAtColumnAsync(connection, cancellationToken);
+        var sql = hasReadAtColumn
+            ? @"
             SELECT id, nombre, email, asunto, texto, ip_usuario::text, created_at, read_at
+            FROM mensajes
+            WHERE deleted_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT @limit;"
+            : @"
+            SELECT id, nombre, email, asunto, texto, ip_usuario::text, created_at, NULL::timestamptz AS read_at
             FROM mensajes
             WHERE deleted_at IS NULL
             ORDER BY created_at DESC
@@ -78,6 +86,16 @@ public sealed class MensajesRepository
     {
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+
+        if (!await HasReadAtColumnAsync(connection, cancellationToken))
+        {
+            await EnsureReadAtColumnIfPossibleAsync(connection, cancellationToken);
+
+            if (!await HasReadAtColumnAsync(connection, cancellationToken))
+            {
+                return false;
+            }
+        }
 
         const string sql = @"
             UPDATE mensajes
@@ -118,6 +136,39 @@ public sealed class MensajesRepository
         const string sql = "DELETE FROM mensajes;";
         await using var command = new NpgsqlCommand(sql, connection);
         return await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task<bool> HasReadAtColumnAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    {
+        const string sql = @"
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'mensajes'
+                  AND column_name = 'read_at'
+            );";
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is bool exists && exists;
+    }
+
+    private static async Task EnsureReadAtColumnIfPossibleAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    {
+        const string sql = @"
+            ALTER TABLE mensajes
+            ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ NULL;";
+
+        try
+        {
+            await using var command = new NpgsqlCommand(sql, connection);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+        catch (PostgresException ex) when (ex.SqlState == "42501")
+        {
+            // Insufficient privilege to alter schema; caller will fallback gracefully.
+        }
     }
 }
 
