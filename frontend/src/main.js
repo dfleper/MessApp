@@ -12,6 +12,8 @@ const MAX_SUBJECT_LENGTH = 80;
 const MIN_MESSAGE_LENGTH = 10;
 const MAX_MESSAGE_LENGTH = 250;
 
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+
 const form = document.getElementById('form');
 const nameInput = document.getElementById('nameInput');
 const emailInput = document.getElementById('emailInput');
@@ -19,7 +21,7 @@ const subjectInput = document.getElementById('subjectInput');
 const messageInput = document.getElementById('messageInput');
 
 if (form && nameInput && emailInput && subjectInput && messageInput) {
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const nombre = nameInput.value.trim();
@@ -36,7 +38,25 @@ if (form && nameInput && emailInput && subjectInput && messageInput) {
       return;
     }
 
-    showToast('Formulario válido', 'success');
+    try {
+      const response = await fetch(`${API_URL}/api/mensajes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ nombre, email, asunto, mensaje })
+      });
+
+      if (!response.ok) {
+        showToast('No se pudo enviar el mensaje. Intenta nuevamente.', 'error');
+        return;
+      }
+
+      showToast('Mensaje enviado correctamente', 'success');
+      form.reset();
+    } catch {
+      showToast('No se pudo conectar con el backend', 'error');
+    }
   });
 }
 
