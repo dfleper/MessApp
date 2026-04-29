@@ -10,11 +10,16 @@ namespace MessApp.Api.Controllers;
 public sealed class MensajesController : ControllerBase
 {
     private static readonly Regex NombreRegex = new(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", RegexOptions.Compiled);
+    private const int DefaultAdminLimit = 20;
+    private const int MaxAdminLimit = 100;
     private readonly MensajesRepository _repository;
+    private readonly string _adminApiKey;
 
-    public MensajesController(MensajesRepository repository)
+    public MensajesController(MensajesRepository repository, IConfiguration configuration)
     {
         _repository = repository;
+        _adminApiKey = configuration.GetSection(AdminAccessOptions.SectionName)
+            .Get<AdminAccessOptions>()?.ApiKey?.Trim() ?? string.Empty;
     }
 
     [HttpPost]
@@ -40,4 +45,24 @@ public sealed class MensajesController : ControllerBase
 
     [HttpGet("/health")]
     public IActionResult Health() => Ok(new { status = "ok" });
+
+    [HttpGet("admin")]
+    public async Task<IActionResult> GetForAdmin([FromQuery] int? limit, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(_adminApiKey))
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Admin access not configured" });
+        }
+
+        var providedKey = Request.Headers["X-Admin-Key"].ToString();
+        if (!string.Equals(providedKey, _adminApiKey, StringComparison.Ordinal))
+        {
+            return Unauthorized(new { error = "Invalid admin credentials" });
+        }
+
+        var safeLimit = Math.Clamp(limit ?? DefaultAdminLimit, 1, MaxAdminLimit);
+        var mensajes = await _repository.GetLatestAsync(safeLimit, cancellationToken);
+
+        return Ok(mensajes);
+    }
 }
