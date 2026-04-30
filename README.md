@@ -35,7 +35,7 @@ Proyecto fullstack para envío y gestión de mensajes:
 
 ## Screenshots
 
-### Tablet View
+### Desktop View
 
 <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;">
   <img src="./screenshots/mac_001.png" width="45%">
@@ -44,11 +44,11 @@ Proyecto fullstack para envío y gestión de mensajes:
 
 ---
 
-### Desktop View
+### Tablet View
 
 <div style="display: flex; gap: 16px; justify-content: center; margin-bottom: 12px;">
-  <img src="./screenshots/tab_001.png" width="45%">
-  <img src="./screenshots/tab_002.png" width="45%">
+  <img src="./screenshots/tab_001.png" width="30%">
+  <img src="./screenshots/tab_002.png" width="30%">
 </div>
 
 ---
