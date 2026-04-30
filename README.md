@@ -1,8 +1,8 @@
  ![GitHub repo size](https://img.shields.io/github/repo-size/dfleper/MessApp?logo=github)
  ![GitHub last commit](https://img.shields.io/github/last-commit/dfleper/MessApp?color=blue&label=last-commit&logo=github&logoColor=white)
  
-<div style="display: flex; align-items: center; gap: 12px;">
-   <img src="./frontend/public/images/img.webp" alt="TempInbox Logo" width="300">
+<div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+  <img src="./frontend/public/images/img.webp" alt="MessApp Logo" width="300">
 </div>
 
 # MessApp (Frontend + Backend)
