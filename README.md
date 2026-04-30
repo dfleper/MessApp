@@ -1,9 +1,9 @@
  ![GitHub repo size](https://img.shields.io/github/repo-size/dfleper/MessApp?logo=github)
  ![GitHub last commit](https://img.shields.io/github/last-commit/dfleper/MessApp?color=blue&label=last-commit&logo=github&logoColor=white)
  
-<div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+<p align="center">
   <img src="./frontend/public/images/img.webp" alt="MessApp Logo" width="300">
-</div>
+</p>
 
 # MessApp (Frontend + Backend)
 
@@ -47,8 +47,8 @@ Proyecto fullstack para envío y gestión de mensajes:
 ### Desktop View
 
 <div style="display: flex; gap: 16px; justify-content: center; margin-bottom: 12px;">
-  <img src="./screenshots/tab_001.png" width="30%">
-  <img src="./screenshots/tab_002.png" width="30%">
+  <img src="./screenshots/tab_001.png" width="45%">
+  <img src="./screenshots/tab_002.png" width="45%">
 </div>
 
 ---
