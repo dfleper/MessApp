@@ -28,7 +28,7 @@ public sealed class MensajesController : ControllerBase
         _adminApiKey = configuration.GetSection(AdminAccessOptions.SectionName)
             .Get<AdminAccessOptions>()?.ApiKey?.Trim() ?? string.Empty;
         var configuredSeconds = configuration.GetSection(RateLimitOptions.SectionName)
-            .Get<RateLimitOptions>()?.SecondsBetweenMessages ?? 300;
+            .Get<RateLimitOptions>()?.SecondsBetweenMessages ?? 900;
         _secondsBetweenMessages = Math.Max(1, configuredSeconds);
     }
 

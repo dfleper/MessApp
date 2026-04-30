@@ -84,7 +84,9 @@ const renderMessages = (mensajes) => {
 
   messagesBody.innerHTML = '';
 
-  mensajes.forEach((mensaje) => {
+  const mensajesOrdenados = [...(mensajes ?? [])].sort((a, b) => Number(a?.id ?? 0) - Number(b?.id ?? 0));
+
+  mensajesOrdenados.forEach((mensaje) => {
     const row = document.createElement('tr');
 
     const isRead = Boolean(mensaje.readAt);
