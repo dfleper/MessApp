@@ -23,11 +23,11 @@ Variables usadas en `docker-compose.yml`:
 - `ASPNETCORE_ENVIRONMENT=Development`
 - `ASPNETCORE_URLS=http://0.0.0.0:5000`
 - `ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=mensajes;Username=postgres;Password=postgres`
-`AdminAccess__ApiKey=${ADMIN_API_KEY:-1234}`
+- `AdminAccess__ApiKey=${ADMIN_API_KEY}`
 
-Significado de `${ADMIN_API_KEY:-1234}`:
-- Si existe `ADMIN_API_KEY` en tu entorno, usa ese valor.
-- Si no existe, usa `1234` como valor por defecto para desarrollo local.
+Significado de `${ADMIN_API_KEY}`:
+- Debes definir `ADMIN_API_KEY` en tu entorno antes de levantar el backend.
+- Si no se define, los endpoints admin quedarán deshabilitados (`503`) por seguridad.
 
 ## Desarrollo con Docker (recomendado)
 

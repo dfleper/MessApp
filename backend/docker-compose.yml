@@ -13,7 +13,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://0.0.0.0:5000
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=mensajes;Username=postgres;Password=postgres
-      - AdminAccess__ApiKey=${ADMIN_API_KEY:-1234}
+      - AdminAccess__ApiKey=${ADMIN_API_KEY}
     depends_on:
       db:
         condition: service_healthy
