@@ -61,6 +61,15 @@ Proyecto fullstack para envío y gestión de mensajes:
 
 ---
 
+### vxCode View
+
+<div style="display: flex; gap: 16px; justify-content: center; margin-bottom: 12px;">
+  <img src="./screenshots/vscode_001.png" width="45%">
+  <img src="./screenshots/vscode_002.png" width="45%">
+</div>
+
+---
+
 ## 1) Estructura del proyecto
 
 ```bash
@@ -237,9 +246,9 @@ docker exec -it mensajes_postgres_dev psql -U postgres -d mensajes -c "TRUNCATE 
 - `DELETE /api/mensajes/admin/{id}`
 - `DELETE /api/mensajes/admin/purge`
 
-En desarrollo, el `docker-compose` del backend define la API key en:
+En desarrollo, el `docker-compose` del backend toma la API key desde el entorno:
 
-- `AdminAccess__ApiKey=1234`
+- `AdminAccess__ApiKey=${ADMIN_API_KEY}`
 
 ---
 
