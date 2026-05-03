@@ -61,7 +61,7 @@ Proyecto fullstack para envío y gestión de mensajes:
 
 ---
 
-### vxCode View
+### vsCode View
 
 <div style="display: flex; gap: 16px; justify-content: center; margin-bottom: 12px;">
   <img src="./screenshots/vscode_001.png" width="45%">
