@@ -9,11 +9,22 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<MessApp.Api.Services.MensajesRepository>();
 builder.Services.AddMemoryCache();
 
+var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+var frontendUrl = builder.Configuration["FRONTEND_URL"];
+var frontendOrigins = string.IsNullOrWhiteSpace(frontendUrl) ? Array.Empty<string>() : new[] { frontendUrl };
+var allowedOrigins = configuredOrigins
+    .Concat(frontendOrigins)
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin => origin.Trim().TrimEnd('/'))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .DefaultIfEmpty("http://localhost:5173")
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -35,5 +46,11 @@ app.UseCors("Frontend");
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var repository = scope.ServiceProvider.GetRequiredService<MessApp.Api.Services.MensajesRepository>();
+    await repository.EnsureCreatedAsync(CancellationToken.None);
+}
 
 app.Run();

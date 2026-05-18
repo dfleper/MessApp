@@ -304,3 +304,64 @@ docker compose down -v
 cd ../frontend
 docker compose down -v
 ```
+
+---
+
+## 7) Despliegue en Railway
+
+La aplicación debe desplegarse como **3 servicios** dentro del mismo proyecto de Railway:
+
+1. **PostgreSQL**: crea un servicio desde la plantilla oficial de PostgreSQL.
+2. **Backend**: crea un servicio desde este repositorio usando `backend/` como root directory.
+3. **Frontend**: crea otro servicio desde este repositorio usando `frontend/` como root directory.
+
+### Rama recomendada
+
+Sí: para estos cambios de despliegue conviene usar una rama de producción separada, por ejemplo `production` o `railway-production`, y configurar Railway para desplegar solo desde esa rama. Así puedes seguir desarrollando en `main`/`work` sin publicar cambios no validados.
+
+Flujo recomendado:
+
+```bash
+git checkout -b production
+git push -u origin production
+```
+
+En Railway, selecciona esa rama en cada servicio de GitHub conectado. Cuando quieras publicar una versión nueva, abre un PR hacia `production` y despliega después de validar backend, frontend y variables de entorno.
+
+### Variables del backend
+
+Configura estas variables en el servicio de backend:
+
+```bash
+ASPNETCORE_ENVIRONMENT=Production
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+FRONTEND_URL=https://TU-FRONTEND.up.railway.app
+ADMIN_API_KEY=una-clave-larga-y-secreta
+```
+
+Notas:
+
+- `DATABASE_URL` puede enlazarse desde el servicio PostgreSQL de Railway. Si prefieres usar el formato de .NET, también sirve `ConnectionStrings__DefaultConnection`.
+- `FRONTEND_URL` debe ser la URL pública exacta del frontend para que CORS permita las llamadas desde el navegador.
+- `ADMIN_API_KEY` es necesaria para el panel `/admin.html`.
+- La API crea la tabla `mensajes` automáticamente al arrancar si todavía no existe.
+
+### Variables del frontend
+
+Configura esta variable en el servicio de frontend:
+
+```bash
+VITE_API_URL=https://TU-BACKEND.up.railway.app
+```
+
+### Healthcheck y comprobación
+
+Cuando Railway termine el despliegue, comprueba:
+
+```bash
+curl -i https://TU-BACKEND.up.railway.app/health
+```
+
+El resultado esperado es una respuesta `200 OK` con `{"status":"ok"}`.
+
+Después abre la URL pública del frontend y envía un mensaje de prueba. En el panel `/admin.html`, introduce `ADMIN_API_KEY` para listar, marcar como leído o borrar mensajes.

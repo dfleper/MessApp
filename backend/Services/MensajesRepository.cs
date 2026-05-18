@@ -10,8 +10,40 @@ public sealed class MensajesRepository
 
     public MensajesRepository(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Missing connection string: DefaultConnection");
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var databaseUrl = configuration["DATABASE_URL"];
+
+        _connectionString = !string.IsNullOrWhiteSpace(connectionString)
+            ? connectionString
+            : ConvertDatabaseUrl(databaseUrl)
+                ?? throw new InvalidOperationException("Missing connection string: DefaultConnection or DATABASE_URL");
+    }
+
+    public async Task EnsureCreatedAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        const string sql = @"
+            CREATE TABLE IF NOT EXISTS mensajes (
+              id BIGSERIAL PRIMARY KEY,
+              nombre VARCHAR(120) NOT NULL,
+              email VARCHAR(255) NOT NULL,
+              asunto VARCHAR(200) NOT NULL,
+              texto TEXT NOT NULL,
+              ip_usuario INET NOT NULL,
+              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              read_at TIMESTAMPTZ NULL,
+              updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              deleted_at TIMESTAMPTZ NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_mensajes_ip_created_at
+              ON mensajes (ip_usuario, created_at DESC)
+              WHERE deleted_at IS NULL;";
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task<long> CreateAsync(CreateMensajeRequest request, IPAddress? remoteIp, CancellationToken cancellationToken)
@@ -170,6 +202,45 @@ public sealed class MensajesRepository
             // Insufficient privilege to alter schema; caller will fallback gracefully.
         }
     }
+
+    private static string? ConvertDatabaseUrl(string? databaseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(databaseUrl))
+        {
+            return null;
+        }
+
+        if (!Uri.TryCreate(databaseUrl, UriKind.Absolute, out var uri))
+        {
+            return databaseUrl;
+        }
+
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var builder = new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.Port > 0 ? uri.Port : 5432,
+            Database = uri.AbsolutePath.TrimStart('/'),
+            Username = Uri.UnescapeDataString(userInfo.ElementAtOrDefault(0) ?? string.Empty),
+            Password = Uri.UnescapeDataString(userInfo.ElementAtOrDefault(1) ?? string.Empty)
+        };
+
+        foreach (var parameter in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = parameter.Split('=', 2);
+            var key = Uri.UnescapeDataString(parts[0]);
+            var value = Uri.UnescapeDataString(parts.ElementAtOrDefault(1) ?? string.Empty);
+
+            if (key.Equals("sslmode", StringComparison.OrdinalIgnoreCase)
+                && Enum.TryParse<SslMode>(value, ignoreCase: true, out var sslMode))
+            {
+                builder.SslMode = sslMode;
+            }
+        }
+
+        return builder.ConnectionString;
+    }
+
 }
 
 public sealed record MensajeAdminItem(
