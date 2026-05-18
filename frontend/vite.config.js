@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [tailwindcss()],
+  preview: {
+    allowedHosts: ['perceptive-consideration-production-d3d4.up.railway.app'],
+  },
   build: {
     rollupOptions: {
       input: {
