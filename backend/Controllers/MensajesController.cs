@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -149,7 +150,7 @@ public sealed class MensajesController : ControllerBase
         return Ok(new { deleted = removedRows });
     }
 
-    private bool IsAdminAuthorized(out IActionResult? unauthorizedResult)
+    private bool IsAdminAuthorized([NotNullWhen(false)] out IActionResult? unauthorizedResult)
     {
         if (string.IsNullOrWhiteSpace(_adminApiKey))
         {
