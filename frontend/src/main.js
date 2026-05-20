@@ -28,10 +28,12 @@ const setSendButtonDisabled = (isDisabled) => {
   sendButton.disabled = isDisabled;
 };
 
+let isSubmitting = false;
+
 if (form && nameInput && emailInput && subjectInput && messageInput) {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (activeToasts.size > 0) {
+    if (isSubmitting || activeToasts.size > 0) {
       return;
     }
 
@@ -48,6 +50,9 @@ if (form && nameInput && emailInput && subjectInput && messageInput) {
     if (!nombreValido || !emailValido || !asuntoValido || !mensajeValido) {
       return;
     }
+
+    isSubmitting = true;
+    setSendButtonDisabled(true);
 
     try {
       const response = await fetch(`${API_URL}/api/mensajes`, {
@@ -67,6 +72,9 @@ if (form && nameInput && emailInput && subjectInput && messageInput) {
       form.reset();
     } catch {
       showToast('No se pudo conectar con el backend', 'error');
+    } finally {
+      isSubmitting = false;
+      setSendButtonDisabled(false);
     }
   });
 }
@@ -250,6 +258,7 @@ const showToast = (message, type = 'info') => {
     activeToasts.delete(toastKey);
     return;
   }
+
   iconElement.textContent = currentToast.icon;
   messageElement.textContent = message;
   subtitleElement.textContent = currentToast.subtitle;
