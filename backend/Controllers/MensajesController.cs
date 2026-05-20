@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text;
+using System.Collections.Concurrent;
 using MessApp.Api.Models;
 using MessApp.Api.Services;
 using Microsoft.Extensions.Caching.Memory;
@@ -17,6 +18,7 @@ public sealed class MensajesController : ControllerBase
     private const int DefaultAdminLimit = 20;
     private const int MaxAdminLimit = 100;
     private const string SenderCookieName = "mess_sender_id";
+    private static readonly ConcurrentDictionary<string, byte> InFlightMessageKeys = new();
     private readonly MensajesRepository _repository;
     private readonly string _adminApiKey;
     private readonly IMemoryCache _memoryCache;
@@ -62,10 +64,26 @@ public sealed class MensajesController : ControllerBase
             });
         }
 
-        var id = await _repository.CreateAsync(request, HttpContext.Connection.RemoteIpAddress, cancellationToken);
-        _memoryCache.Set(senderKey, DateTimeOffset.UtcNow.AddSeconds(_secondsBetweenMessages), TimeSpan.FromSeconds(_secondsBetweenMessages));
+        var messageFingerprint = BuildMessageFingerprint(senderKey, request);
+        if (!InFlightMessageKeys.TryAdd(messageFingerprint, 0))
+        {
+            return StatusCode(StatusCodes.Status429TooManyRequests, new
+            {
+                error = "Ya se está procesando este mensaje"
+            });
+        }
 
-        return Created($"/api/mensajes/{id}", new { id });
+        try
+        {
+            var id = await _repository.CreateAsync(request, HttpContext.Connection.RemoteIpAddress, cancellationToken);
+            _memoryCache.Set(senderKey, DateTimeOffset.UtcNow.AddSeconds(_secondsBetweenMessages), TimeSpan.FromSeconds(_secondsBetweenMessages));
+
+            return Created($"/api/mensajes/{id}", new { id });
+        }
+        finally
+        {
+            InFlightMessageKeys.TryRemove(messageFingerprint, out _);
+        }
     }
 
     private string? GetOrCreateSenderIdCookie()
@@ -94,6 +112,19 @@ public sealed class MensajesController : ControllerBase
         return string.IsNullOrWhiteSpace(senderId)
             ? $"msg-rate:{normalizedIp}"
             : $"msg-rate:{normalizedIp}:{senderId}";
+    }
+
+    private static string BuildMessageFingerprint(string senderKey, CreateMensajeRequest request)
+    {
+        var normalizedPayload = string.Join('|',
+            senderKey,
+            request.Nombre.Trim(),
+            request.Email.Trim().ToLowerInvariant(),
+            request.Asunto.Trim(),
+            request.Mensaje.Trim());
+
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(normalizedPayload));
+        return Convert.ToHexString(hashBytes);
     }
 
     [HttpGet("/health")]
