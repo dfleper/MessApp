@@ -91,21 +91,46 @@ const renderMessages = (mensajes) => {
 
     const isRead = Boolean(mensaje.readAt);
 
-    row.innerHTML = `
-      <td class="p-2 align-top">${mensaje.id}</td>
-      <td class="p-2 align-top">${mensaje.nombre}</td>
-      <td class="p-2 align-top">${mensaje.email}</td>
-      <td class="p-2 align-top">${mensaje.asunto}</td>
-      <td class="p-2 align-top">${mensaje.mensaje}</td>
-      <td class="p-2 align-top">${formatDate(mensaje.createdAt)}</td>
-      <td class="p-2 align-top">${isRead ? 'Sí' : 'No'}</td>
-      <td class="p-2 align-top">
-        <div class="flex flex-col gap-2">
-          <button type="button" data-action="read" data-id="${mensaje.id}" ${isRead ? 'disabled' : ''} class="shadow bg-indigo-600 enabled:hover:bg-indigo-900 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed">Marcar leído</button>
-          <button type="button" data-action="delete" data-id="${mensaje.id}" class="shadow bg-fuchsia-700 hover:bg-fuchsia-900 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">Soft delete</button>
-        </div>
-      </td>
-    `;
+    const createCell = (value) => {
+      const cell = document.createElement('td');
+      cell.className = 'p-2 align-top';
+      cell.textContent = value;
+      return cell;
+    };
+
+    row.appendChild(createCell(String(mensaje.id ?? '')));
+    row.appendChild(createCell(String(mensaje.nombre ?? '')));
+    row.appendChild(createCell(String(mensaje.email ?? '')));
+    row.appendChild(createCell(String(mensaje.asunto ?? '')));
+    row.appendChild(createCell(String(mensaje.mensaje ?? '')));
+    row.appendChild(createCell(formatDate(mensaje.createdAt)));
+    row.appendChild(createCell(isRead ? 'Sí' : 'No'));
+
+    const actionsCell = document.createElement('td');
+    actionsCell.className = 'p-2 align-top';
+
+    const actionsContainer = document.createElement('div');
+    actionsContainer.className = 'flex flex-col gap-2';
+
+    const readButton = document.createElement('button');
+    readButton.type = 'button';
+    readButton.dataset.action = 'read';
+    readButton.dataset.id = String(mensaje.id ?? '');
+    readButton.disabled = isRead;
+    readButton.className = 'shadow bg-indigo-600 enabled:hover:bg-indigo-900 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed';
+    readButton.textContent = 'Marcar leído';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.dataset.action = 'delete';
+    deleteButton.dataset.id = String(mensaje.id ?? '');
+    deleteButton.className = 'shadow bg-fuchsia-700 hover:bg-fuchsia-900 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline';
+    deleteButton.textContent = 'Soft delete';
+
+    actionsContainer.appendChild(readButton);
+    actionsContainer.appendChild(deleteButton);
+    actionsCell.appendChild(actionsContainer);
+    row.appendChild(actionsCell);
 
     messagesBody.appendChild(row);
   });
