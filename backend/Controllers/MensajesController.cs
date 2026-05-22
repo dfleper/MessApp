@@ -103,7 +103,7 @@ public sealed class MensajesController : ControllerBase
             MaxAge = TimeSpan.FromDays(30)
         });
 
-        return null;
+        return senderId;
     }
 
     private static string BuildSenderKey(string? ip, string? senderId)
